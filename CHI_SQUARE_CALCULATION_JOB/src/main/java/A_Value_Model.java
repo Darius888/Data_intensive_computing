@@ -10,22 +10,21 @@ public class A_Value_Model implements WritableComparable<A_Value_Model> {
     private Text second;
 
     public A_Value_Model() {
-        this.first=new Text();
-        this.second=new Text();
+        this.first = new Text();
+        this.second = new Text();
 
     }
 
-    public A_Value_Model(Text first,Text second) {
+    public A_Value_Model(Text first, Text second) {
         try {
-            this.first= first;
-            this.second= second;
+            this.first = first;
+            this.second = second;
 
-        }catch(Exception ex) {
-            System.out.println("Exception occurred "+ex.getCause());
+        } catch (Exception ex) {
+            System.out.println("Exception occurred " + ex.getCause());
         }
 
     }
-
 
 
     public Text getFirst() {
@@ -46,7 +45,7 @@ public class A_Value_Model implements WritableComparable<A_Value_Model> {
 
     @Override
     public String toString() {
-        return this.first+"\t"+this.second+"\t";
+        return this.first + "\t" + this.second + "\t";
 
     }
 
@@ -74,6 +73,5 @@ public class A_Value_Model implements WritableComparable<A_Value_Model> {
     public void readFields(DataInput dataInput) throws IOException {
         first.readFields(dataInput);
         second.readFields(dataInput);
-//        third.readFields(dataInput);
     }
 }

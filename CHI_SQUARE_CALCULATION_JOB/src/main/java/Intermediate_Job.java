@@ -1,20 +1,9 @@
-import org.apache.hadoop.conf.Configuration;
-import org.apache.hadoop.fs.Path;
-import org.apache.hadoop.io.ArrayWritable;
-import org.apache.hadoop.io.IntWritable;
-import org.apache.hadoop.io.LongWritable;
 import org.apache.hadoop.io.Text;
-import org.apache.hadoop.mapreduce.Job;
 import org.apache.hadoop.mapreduce.Mapper;
 import org.apache.hadoop.mapreduce.Reducer;
-import org.apache.hadoop.mapreduce.lib.input.FileInputFormat;
-import org.apache.hadoop.mapreduce.lib.input.MultipleInputs;
-import org.apache.hadoop.mapreduce.lib.input.TextInputFormat;
-import org.apache.hadoop.mapreduce.lib.output.FileOutputFormat;
+
 import java.io.IOException;
 import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.List;
 
 
 public class Intermediate_Job {
@@ -30,21 +19,19 @@ public class Intermediate_Job {
             String[] split = value.toString().split("\\s+");
             Text newKey = new Text();
             Text newVal = new Text();
-            if(split.length == 3)
-            {
+            if (split.length == 3) {
                 newKey = new Text(split[1]);
                 newVal = new Text(split[0] + " " + split[2]);
 
-                context.write(newKey,newVal);
+                context.write(newKey, newVal);
 
             }
 
-            if(split.length == 2)
-            {
+            if (split.length == 2) {
                 newKey = new Text(split[0]);
                 newVal = new Text(split[1]);
 
-                context.write(newKey,newVal);
+                context.write(newKey, newVal);
             }
 
         }
@@ -66,30 +53,28 @@ public class Intermediate_Job {
             ArrayList<Text> valueszz = new ArrayList<>();
             ArrayList<Text> keyzz = new ArrayList<>();
 
-            for(Text val: values) {
+            for (Text val : values) {
 
-                if(val.toString().split("\\s+").length==1) {
+                if (val.toString().split("\\s+").length == 1) {
                     aaa = new Text(val);
                 }
-                if(val.toString().split("\\s+").length==2) {
+                if (val.toString().split("\\s+").length == 2) {
                     texts.add(new Text(val));
 
                 }
             }
             //newVal CONSISTS OF TWO VALUES!!!!!!!
-            for(Text text: texts)
-            {
+            for (Text text : texts) {
                 newVal = new Text(key + " " + text.toString().split("\\s+")[1]);
                 valueszz.add(new Text(text.toString().split("\\s+")[0] + " " + newVal + " " + aaa.toString()));
             }
 
-            for(Text text: valueszz)
-            {
-                context.write(new Text(text.toString().split("\\s+")[0]),new Text(text.toString().split("\\s+")[1] + " " + text.toString().split("\\s+")[2] + " " + text.toString().split("\\s+")[3]));
+            for (Text text : valueszz) {
+                context.write(new Text(text.toString().split("\\s+")[0]), new Text(text.toString().split("\\s+")[1] + " " + text.toString().split("\\s+")[2] + " " + text.toString().split("\\s+")[3]));
             }
 
 
-            }
         }
+    }
 
 }

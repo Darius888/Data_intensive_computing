@@ -1,4 +1,3 @@
-
 import org.apache.hadoop.io.Text;
 import org.apache.hadoop.io.WritableComparable;
 
@@ -12,22 +11,21 @@ public class TextPair implements WritableComparable<TextPair> {
     private Text second;
 
     public TextPair() {
-        this.first=new Text();
-        this.second=new Text();
+        this.first = new Text();
+        this.second = new Text();
 
     }
 
-    public TextPair(Text first,Text second) {
+    public TextPair(Text first, Text second) {
         try {
-            this.first= first;
-            this.second= second;
+            this.first = first;
+            this.second = second;
 
-        }catch(Exception ex) {
-            System.out.println("Exception occurred "+ex.getCause());
+        } catch (Exception ex) {
+            System.out.println("Exception occurred " + ex.getCause());
         }
 
     }
-
 
 
     public Text getFirst() {
@@ -37,7 +35,6 @@ public class TextPair implements WritableComparable<TextPair> {
     public Text getSecond() {
         return second;
     }
-
 
 
     public void setFirst(Text first) {
@@ -51,7 +48,7 @@ public class TextPair implements WritableComparable<TextPair> {
 
     @Override
     public String toString() {
-        return this.first+"\t"+this.second+"\t";
+        return this.first + "\t" + this.second + "\t";
 
     }
 
