@@ -1,8 +1,6 @@
 import org.apache.hadoop.io.WritableComparable;
 import org.apache.hadoop.io.WritableComparator;
 
-import java.util.ArrayList;
-
 public class SortDoubleComparator extends WritableComparator {
     protected SortDoubleComparator() {
         super(TextPairChi.class, true);

@@ -2,15 +2,17 @@ import org.apache.hadoop.io.DoubleWritable;
 import org.apache.hadoop.io.Text;
 import org.apache.hadoop.io.WritableComparable;
 import org.apache.hadoop.io.WritableComparator;
-import org.apache.hadoop.mapreduce.*;
-
+import org.apache.hadoop.mapreduce.Mapper;
+import org.apache.hadoop.mapreduce.Partitioner;
+import org.apache.hadoop.mapreduce.Reducer;
 
 import java.io.IOException;
-import java.util.ArrayList;
 
 
+/**
+ * 11th job responsible for sorting chi square values in descending order.
+ */
 public class Sort_Chi_Job {
-
 
     public static class NaturalKeyGroupingComparator extends WritableComparator {
 
@@ -40,7 +42,14 @@ public class Sort_Chi_Job {
     public static class TokenizerMapper
             extends Mapper<Object, Text, TextPairChi, Text> {
 
-
+        /**
+         * @param key : is the line offset
+         * @param value : the actual line with text
+         * @param context : object through which output is emitted as well as progress is reported
+         * In this map method each line is received as "category term chi value"
+         * Then this line is splitted through whitespaces.
+         * Then such key value pairs are emitted < key: (category, chi value) value: term >
+         */
         public void map(Object key, Text value, Context context
         ) throws IOException, InterruptedException {
 
@@ -52,19 +61,26 @@ public class Sort_Chi_Job {
     }
 
     public static class IntSumReducer
-              extends Reducer<TextPairChi, Text, Text, Text> {
+            extends Reducer<TextPairChi, Text, Text, Text> {
         long counter = 0;
         Text prev = null;
+
+
+        /**
+         * @param key : key value received from mapper
+         * @param values : values which belong to each key. They are received as Iterable.
+         * @param context : object through which output is emitted as well as progress is reported
+         * In this reduce method such key value pairs are received from mapper < key: (category, chi value) value: term > which are sorted in descending order, by using partitioner, sort comparator, natural key grouping comparator.
+         * Then for each key(category) counter is added to identify the position so in the next job we could take top 150 values.
+         * Then we output such key values pairs < key:category term, value:chi^2 value counter >
+         */
         public void reduce(TextPairChi key, Iterable<Text> values,
                            Context context
         ) throws IOException, InterruptedException {
-            for(Text text: values)
-            {
-                if(prev!=null)
-                {
-                    if(!key.getFirst().toString().equals(prev.toString()))
-                    {
-                        counter=0;
+            for (Text text : values) {
+                if (prev != null) {
+                    if (!key.getFirst().toString().equals(prev.toString())) {
+                        counter = 0;
                     }
                 }
 
@@ -72,194 +88,6 @@ public class Sort_Chi_Job {
                 counter++;
                 prev = new Text(key.getFirst().toString());
             }
+        }
     }
-}
-
-
-//    public static class IntSumReducer
-//            extends Reducer<TextPairChi, Text, Text, Text> {
-//
-//        private MultipleOutputs<Text,Text> out;
-//        @Override
-//        public void setup(Context context) {
-//            out = new MultipleOutputs<Text,Text>(context);
-//        }
-//
-//        public void reduce(TextPairChi key, Iterable<Text> values,
-//                           Context context
-//        ) throws IOException, InterruptedException {
-//            ArrayList<Text> valuesz = new ArrayList<>();
-//            for(Text text: values)
-//            {
-//                valuesz.add(new Text(key.getSecond() + " " + text.toString()));
-//            }
-////            out.write("tmpoutput",new Text("A"), new Text("A"), "tmpoutput/"+"A");
-//
-//            for(Text text: values) {
-//                out.write(new Text("A"), new Text("A"), "tmpoutput1/agagag");
-//            }
-//        }
-//        @Override
-//        public void cleanup(Context context) throws IOException,InterruptedException {
-////            out.write("tmpoutput",new Text("A"), new Text("A"), "tmpoutput/"+"A");
-//
-////            out.write(new Text("A"), new Text("A"),"tmpoutput/A.txt");
-//
-//            out.close();
-//        }
-//        }
-
-
-//    public static class IntSumReducer
-//            extends Reducer<TextPairChi, Text, Text, Text> {
-//
-//        private TreeMap<Double, Text> tmap2;
-//
-//        @Override
-//        public void setup(Context context) throws IOException,
-//                InterruptedException
-//        {
-//            tmap2 = new TreeMap<Double, Text>();
-//        }
-//
-//        public void reduce(TextPairChi key, Iterable<Text> values,
-//                           Context context
-//        ) throws IOException, InterruptedException {
-//
-//         for (Text text : values) {
-//             tmap2.put(Double.parseDouble(key.getSecond().toString()), new Text(key.getFirst().toString() + " " + text.toString() + " "));
-//         }
-//            if (tmap2.size() > 150)
-//            {
-//                tmap2.remove(tmap2.firstKey());
-//            }
-//
-//        }
-//
-//        @Override
-//        public void cleanup(Context context) throws IOException,
-//                InterruptedException
-//        {
-//
-//            for (Map.Entry<Double, Text> entry : tmap2.entrySet())
-//            {
-//
-//                Double count = entry.getKey();
-//                Text name = entry.getValue();
-//                context.write(new Text(name), new Text(count.toString()));
-//            }
-//        }
-//    }
-//}
-//     public static class IntSumReducer
-//            extends Reducer<TextPairChi, Text, Text, Text> {
-//        long counteris = 0;
-//        Text prev = null;
-//        StringBuilder stringBuilder = new StringBuilder();
-//        ArrayList<Text> arrayList = new ArrayList<>();
-//
-//    public void reduce(TextPairChi key, Iterable<Text> values,
-//                           Context context
-//        ) throws IOException, InterruptedException {
-//
-//
-//
-//            for (Text text : values) {
-//                arrayList.add(new Text(key.getFirst().toString() + " " + text.toString() + " " + key.getSecond().toString() + " "));
-//            }
-//
-//            Text prev2 = null;
-//            for(Text text:arrayList)
-//            {
-////                System.out.println("AAAAAAAAA" + text.toString().split("\\s+")[1] + "  " + text.toString().split("\\s+")[2] + " ");
-//                if (counteris < 150) {
-////                    System.out.println(text.toString().split("\\s+")[1] + ":" + text.toString().split("\\s+")[2] + " ");
-//                    stringBuilder.append(text.toString().split("\\s+")[1] + ":" + text.toString().split("\\s+")[2] + " ");
-//                }
-//
-//                if (counteris != 0) {
-//
-//                    if (!(text.toString().split("\\s+")[0].equals(prev.toString()))) {
-//
-////                        System.out.println(prev.toString() + " " + stringBuilder.toString());
-//                        context.write(new Text(prev.toString()), new Text(stringBuilder.toString()));
-//                        stringBuilder = new StringBuilder();
-//                        counteris = 0;
-//                    }
-//
-//                }
-//
-//
-//                prev = new Text(text.toString().split("\\s+")[0]);
-//
-//                counteris++;
-//            }
-////            context.write(new Text(prev.toString()), new Text(stringBuilder.toString()));
-//
-//        }
-//    }
-
-
-
-//    public static class IntSumReducer
-//            extends Reducer<TextPairChi, Text, Text, Text> {
-//        long counteris = 0;
-//        Text prev = null;
-//        StringBuilder stringBuilder = new StringBuilder();
-//
-//        Double aDouble = new Double(4.6666);
-//        Double aDoubles =new Double(5.3333);
-//
-//        ArrayList<Text> elems= new ArrayList<>();
-//        ArrayList<Text> elems2= new ArrayList<>();
-//        public void reduce(TextPairChi key, Iterable<Text> values,
-//                           Context context
-//        ) throws IOException, InterruptedException {
-//
-//            for (Text text : values) {
-//                if (counteris < 150) {
-//                    elems.add(new Text(key.getFirst().toString() + " " + text.toString() + " " + key.getSecond().toString()));
-//                    elems2.add(new Text(key.getFirst().toString() + " " + text.toString() + " " + key.getSecond().toString()));
-//                }
-//
-//                if(counteris > 150 && (key.getFirst().toString().equals(prev.toString())))
-//                {
-//
-//                    for (Text elem : elems) {
-//                        if (elem.toString().split("\\s+")[0].equals(key.getFirst().toString()) && Double.compare(Double.parseDouble(elem.toString().split("\\s+")[2]), Double.parseDouble(key.getSecond().toString())) < 0) {
-//                            elem.set(new Text(key.getFirst().toString() + " " + text.toString() + " " + key.getSecond().toString()));
-//                        }
-//                        if (elem.toString().split("\\s+")[0].equals(key.getFirst().toString()) && Double.parseDouble(elem.toString().split("\\s+")[2]) < Double.parseDouble(key.getSecond().toString())) {
-//                            elem.set(new Text(key.getFirst().toString() + " " + text.toString() + " " + key.getSecond().toString()));
-//                        }
-//                    }
-////
-//                }
-//
-//                if (counteris != 0) {
-//                    if (!(key.getFirst().toString().equals(prev.toString()))) {
-//                        for(Text text1:elems)
-//                        {
-//                            stringBuilder.append(text1.toString().split("\\s+")[1] + ":" + text1.toString().split("\\s+")[2] + " ");
-//                        }
-//                        context.write(new Text(prev.toString()), new Text(stringBuilder.toString()));
-//                        stringBuilder = new StringBuilder();
-//                        counteris = 0;
-//                        elems = new ArrayList<>();
-//                    }
-//                }
-//                prev = new Text(key.getFirst().toString());
-//                counteris++;
-//            }
-//
-//
-//
-//        }
-////        @Override
-////        public void cleanup(Context context) throws IOException, InterruptedException
-////        {
-////            context.write(new Text(prev.toString()), new Text(stringBuilder.toString()));
-////        }
-//    }
-
 }

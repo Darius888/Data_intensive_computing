@@ -6,12 +6,25 @@ import java.io.IOException;
 import java.util.ArrayList;
 
 
+/**
+ * Ninth job responsible for combining A Nt Nc and N values together which are all needed to get B,C,D values for chi square calculation.
+ */
 public class Intermediate_Job_3 {
 
-    public static class TokenizerMapper
+    public static class Mapper1
             extends Mapper<Object, Text, Text, Text> {
 
 
+        /**
+         * @param key : is the line offset
+         * @param value : the actual line with text
+         * @param context : object through which output is emitted as well as progress is reported
+         * In this map method, from one file, each line is received as "category term A Nt Nc" and from another "category N"
+         * Then this line is splitted through whitespaces.
+         * Then by length we identify from which file the line is coming and based on that we output two different keys
+         * If length == 5, then such key values pairs are emitted through mapper: < key:category,value:term A Nt Nc>
+         * If length == 2, then such key values pairs are emitted through mapper: < key:category,value:N >
+         */
         public void map(Object key, Text value, Context context
         ) throws IOException, InterruptedException {
 
@@ -27,10 +40,19 @@ public class Intermediate_Job_3 {
         }
     }
 
-    public static class IntSumReducer
+    public static class Reducer1
             extends Reducer<Text, Text, Text, Text> {
 
-
+        /**
+         * @param key : key value received from mapper
+         * @param values : values which belong to each key. They are received as Iterable.
+         * @param context : object through which output is emitted as well as progress is reported
+         * In this reduce method such key value pairs are received from mapper < key:category,value:term A Nt Nc> , < key:category,value:N >
+         * Then it is checked if value for each key(category) splits into four or one strings
+         * If it's 1, then we know that it's N and we add it to one array
+         * If 4 then we know that's term A Nt Nc and add it to another
+         * Then we combine all and output such key values pairs < key:category, value:term A Nt Nc N>
+         */
         public void reduce(Text key, Iterable<Text> values,
                            Context context
         ) throws IOException, InterruptedException {
@@ -58,7 +80,5 @@ public class Intermediate_Job_3 {
                 context.write(key, text);
             }
         }
-
     }
-
 }

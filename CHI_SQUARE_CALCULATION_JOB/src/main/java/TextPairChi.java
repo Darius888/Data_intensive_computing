@@ -12,8 +12,6 @@ public class TextPairChi implements WritableComparable<TextPairChi> {
     private DoubleWritable second;
 
 
-
-
     public TextPairChi() {
         this.first = new Text();
         this.second = new DoubleWritable();
@@ -29,7 +27,6 @@ public class TextPairChi implements WritableComparable<TextPairChi> {
         }
 
     }
-
 
     public Text getFirst() {
         return first;
@@ -47,12 +44,10 @@ public class TextPairChi implements WritableComparable<TextPairChi> {
         this.second = second;
     }
 
-
     @Override
     public String toString() {
         return this.first + "\t" + this.second + "\t";
     }
-
 
     @Override
     public int compareTo(TextPairChi o) {
@@ -65,8 +60,8 @@ public class TextPairChi implements WritableComparable<TextPairChi> {
 
     @Override
     public void write(DataOutput dataOutput) throws IOException {
-            first.write(dataOutput);
-            second.write(dataOutput);
+        first.write(dataOutput);
+        second.write(dataOutput);
     }
 
     @Override
