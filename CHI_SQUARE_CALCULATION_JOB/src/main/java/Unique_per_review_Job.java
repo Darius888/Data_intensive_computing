@@ -1,16 +1,16 @@
 import org.apache.hadoop.io.IntWritable;
+import org.apache.hadoop.io.NullWritable;
 import org.apache.hadoop.io.Text;
 import org.apache.hadoop.mapreduce.Mapper;
+import org.apache.hadoop.mapreduce.Reducer;
 import org.json.JSONObject;
 
 import java.io.IOException;
-import java.util.Arrays;
-import java.util.List;
-import java.util.StringTokenizer;
+import java.util.*;
 
 
 /**
- * First job responsible for outputting all terms per each review
+ * First job responsible for outputting value A (number of review texts which contain term t in category c)
  */
 public class Unique_per_review_Job {
 
@@ -19,7 +19,7 @@ public class Unique_per_review_Job {
      * Mapper class in which map method is as well as a list of stopwords added as a List.
      */
     public static class Mapper1
-            extends Mapper<Object, Text, TextPair, IntWritable> {
+            extends Mapper<Object, Text, Text, IntWritable> {
 
         private final static IntWritable ONE = new IntWritable(1);
         List<String> lines = Arrays.asList(
@@ -58,29 +58,62 @@ public class Unique_per_review_Job {
          * @param value : the actual line with text
          * @param context : object through which output is emitted as well as progress is reported
          * In this map method each line is received as a json: {"reviewerID": "A2VNYWOPJ13AFP", "asin": "0981850006", "reviewerName": "Amazon Customer \"carringt0n\"", "helpful": [6, 7], "reviewText": "This was a gift for my other husband.  He's making us things from it all the time and we love the food.  Directions are simple, easy to read and interpret, and fun to make.  We all love different kinds of cuisine and Raichlen provides recipes from everywhere along the barbecue trail as he calls it. Get it and just open a page.  Have at it.  You'll love the food and it has provided us with an insight into the culture that produced it. It's all about broadening horizons.  Yum!!", "overall": 5.0, "summary": "Delish", "unixReviewTime": 1259798400, "reviewTime": "12 3, 2009", "category": "Patio_Lawn_and_Garde"}
-         * Then from the json "category", "reviewerID", "reviewText" fields are extracted.
+         * Then from the json "category", "reviewText" fields are extracted.
          * After that iteration through review text is done and not needed symbols are filtered out as well as digits, single characters and stopwords which are described in the List lines.
-         * Then such key values pairs are emitted through mapper: < key:(reviewID,category term),value:1 >
+         * Then all terms per each category, per each review are added to hash set to eliminate duplicates
+         * Then such key values pairs are emitted through mapper: < key:(category term),value:1 >
          */
         public void map(Object key, Text value, Context context
         ) throws IOException, InterruptedException {
 
+            HashSet<Text> texts =new HashSet<>();
+
             JSONObject obj = new JSONObject(value.toString());
             Text category = new Text(obj.getString("category"));
-            Text reviewID = new Text(obj.getString("reviewerID"));
             Text term = new Text(obj.getString("reviewText"));
 
-            StringTokenizer itr = new StringTokenizer(term.toString(), " .!?,;:()[]{}-_\"'`~#&*%$\\/");
+            StringTokenizer itr = new StringTokenizer(term.toString(), " \t0123456789.!?,;:()[]{}-_\"'`~#&*%$\\/");
 
             while (itr.hasMoreTokens()) {
                 String term_token = itr.nextToken().toLowerCase();
                 term_token = term_token
-                        .replaceAll("[0-9]", "")
-                        .replaceAll("\\s+", "");
+                        .replaceAll("\\s+","")
+                        .replaceAll("\t", "");
+
                 if (term_token.length() > 1 && !lines.contains(term_token)) {
-                    context.write(new TextPair(reviewID, new Text(category + " " + term_token)), ONE);
+                    texts.add(new Text(term_token));
                 }
+            }
+            for(Text text: texts)
+            {
+                context.write(new Text(category + "  " + text.toString()), ONE);
             }
         }
     }
+
+
+    public static class Reducer1
+            extends Reducer<Text, IntWritable, Text, IntWritable> {
+
+        /**
+         * @param key : key value received from mapper
+         * @param values : values which belong to each key. They are received as Iterable.
+         * @param context : object through which output is emitted as well as progress is reported
+         * In this reduce method such key value pairs are received from mapper < key:(category term),value:1 >
+         * Then for each category we sum how many terms we have in each category per each review
+         * We emit such key value pairs < key: category term, value: sum(number of review texts which contain term t in category c)
+         */
+        public void reduce(Text key, Iterable<IntWritable> values,
+                           Context context
+        ) throws IOException, InterruptedException {
+
+            int sum = 0;
+            for(IntWritable text:values)
+            {
+                sum += text.get();
+            }
+            context.write(new Text(key), new IntWritable(sum));
+        }
+    }
+
 }

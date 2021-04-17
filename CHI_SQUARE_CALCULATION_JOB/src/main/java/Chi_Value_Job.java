@@ -72,7 +72,8 @@ public class Chi_Value_Job {
                 C = Double.parseDouble(Nc.toString()) - Double.parseDouble(A.toString());
                 D = Double.parseDouble(N.toString()) - Double.parseDouble(Nt.toString()) - (Double.parseDouble(Nc.toString()) - Double.parseDouble(A.toString()));
 
-                Chi = Double.parseDouble(N.toString()) * Math.pow((Integer.parseInt(A.toString()) * D - B * C), 2) / ((Double.parseDouble(A.toString()) + C) * (B + D) * (Double.parseDouble(A.toString()) + B) * (C + D));
+                //DOUBLE HERE ?
+                Chi = Double.parseDouble(N.toString()) * Math.pow(((Double.parseDouble(A.toString()) * D) - (B * C)), 2) / ((Double.parseDouble(A.toString()) + C) * (B + D) * (Double.parseDouble(A.toString()) + B) * (C + D));
 
                 context.write(new TextPair(key, Terms), new DoubleWritable(Chi));
             }

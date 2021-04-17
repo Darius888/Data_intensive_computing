@@ -1,4 +1,5 @@
 import org.apache.hadoop.io.IntWritable;
+import org.apache.hadoop.io.LongWritable;
 import org.apache.hadoop.io.Text;
 import org.apache.hadoop.mapreduce.Mapper;
 import org.apache.hadoop.mapreduce.Reducer;
@@ -13,7 +14,7 @@ import java.io.IOException;
 public class Nc_Value_Job {
 
     public static class Mapper1
-            extends Mapper<Object, Text, Text, IntWritable> {
+            extends Mapper<Object, Text, Text, Text> {
 
         private final static IntWritable ONE = new IntWritable(1);
 
@@ -30,13 +31,14 @@ public class Nc_Value_Job {
 
             JSONObject obj = new JSONObject(value.toString());
             Text category = new Text(obj.getString("category"));
+            Text reviewerID = new Text(obj.getString("reviewerID"));
 
-            context.write(category, ONE);
+            context.write(category, reviewerID);
         }
     }
 
     public static class Reducer1
-            extends Reducer<Text, IntWritable, Text, IntWritable> {
+            extends Reducer<Text, Text, Text, LongWritable> {
 
         /**
          * @param key : key value received from mapper
@@ -46,19 +48,17 @@ public class Nc_Value_Job {
          * Then each value per category is summed up
          * Then such key values pairs are emitted through mapper: < key:(category), value:sum(number of documents per category) >
          */
-        public void reduce(Text key, Iterable<IntWritable> values,
+        public void reduce(Text key, Iterable<Text> values,
                            Context context
         ) throws IOException, InterruptedException {
 
-
-            int sum = 0;
-            for (IntWritable val : values) {
-                sum += val.get();
+            long sum = 0;
+            for (Text val : values) {
+//                sum += val.get();
+                sum +=1;
             }
-            context.write(key, new IntWritable(sum));
+            context.write(key, new LongWritable(sum));
 
         }
     }
-
-
 }

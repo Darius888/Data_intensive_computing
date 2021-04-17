@@ -26,8 +26,8 @@ public class Nt_Value_Job {
 
             String[] splited = value.toString().split("\\s+");
 
-            context.write(new Text(splited[1]), new IntWritable(Integer.parseInt(splited[2])));
 
+            context.write(new Text(splited[1]), new IntWritable(Integer.parseInt(splited[2])));
         }
     }
 
